@@ -1,7 +1,6 @@
-Sergey
-Kirill
-Eva
-Archil
-Vasiliy
-Nina
-Aleksandr
+polina
+orange
+course
+apple
+house
+text

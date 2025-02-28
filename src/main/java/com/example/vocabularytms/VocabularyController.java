@@ -20,6 +20,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.URL;
@@ -38,55 +39,111 @@ public class VocabularyController implements Initializable {
     @FXML
     private Button add;
 
+    @FXML
+    private Button close;
+
     ArrayList<String> storeValues;
 
-    // Create File & Read / Write
+
     private final File file;
     BufferedReader reader;
 
-    // Not everything can be by default created and sent to a constructor
-    // We must keep in mind timing and the way constructors are build and objects are created
-    public VocabularyController(){
+    public VocabularyController() throws IOException {
         listView = new ListView<>();
         file = new File("src/main/resources/com/example/vocabularytms/vocabulary.txt");
         storeValues = new ArrayList<>();
     }
 
     @FXML
+    public void closeApp(ActionEvent actionEvent){
+        updateDocument();
+        System.out.println("Closing....");
+        Stage stage = (Stage) close.getScene().getWindow();
+        stage.close();
+    }
+
+    private void updateDocument(){
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
+            for (String word : storeValues) {
+                writer.write(word);
+                writer.newLine();
+
+            }
+            System.out.println("Collection: " + storeValues);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @FXML
     public void addWord(ActionEvent actionEvent) {
-        // Adds a word to the list
+
         if (textValue.getText().isBlank() || textValue.getText().isEmpty()){
             System.out.println("Your field is either blank or empty...");
             return;
         }
 
-        listView.getItems().add(textValue.getText());
+        listView.getItems().add(textValue.getText().trim());
+        storeValues.add(textValue.getText().trim());
+
+        System.out.println("Adding word '" + textValue.getText().trim() + "'");
+
+        System.out.println("New collection: " + storeValues);
+
+        textValue.clear();
     }
 
     @FXML
     public void deleteWord(ActionEvent actionEvent) {
-        // This method will delete a particular word in the list
+        int selectedElement = listView.getSelectionModel().getSelectedIndex();
+
+        if (selectedElement == -1){
+            System.out.println("Please choose word in the list");
+            return;
+        }
+
+        String wordElement = listView.getItems().get(selectedElement);
+
+        listView.getItems().remove(selectedElement);
+        storeValues.remove(wordElement);
+
+        System.out.println("Deleting word '" + wordElement + "'");
+        updateDocument();
+
     }
 
     @FXML
     public void saveVocabulary(ActionEvent actionEvent) {
-        // This method will save your data in a .TXT file
-        String[] words = new String[]{"Horse", "Dogs", "Cats", "Rabbits", "Camels"};
-        listView.getItems().addAll(words);
+        try (FileWriter writer = new FileWriter(file, false)) {
+            for (String arrayListElement : storeValues) {
+                writer.write(arrayListElement + "\n");
+            }
+            System.out.println("File saved successfully...");
+        } catch (IOException e) {
+            System.out.println("Error writing to file: " + e.getMessage());
+        }
+
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // method which create a code once some object have been initialized
-        // Read document and save values to ArrayList
-        // Then add all ArrayList values to listview -> listview.getItems().addAll(_array);
         try{
             String line;
             reader = new BufferedReader(new FileReader(file));
 
             while((line = reader.readLine()) != null){
+                storeValues.add(line);
                 listView.getItems().add(line);
+
             }
+            if (storeValues.isEmpty()) {
+                System.out.println("Empty collection");
+
+            } else {
+                System.out.println("Initial collection: " + storeValues);
+            }
+
+
         } catch (FileNotFoundException e){
             System.out.println("File was not found!");
         } catch (IOException e) {
